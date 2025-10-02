@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ITodoRepository extends CrudRepository<Todo, Long> {
 
+    Iterable<Todo> findByTitle(String title);
+
+    Iterable<Todo> findByTitleContainingIgnoreCase(String title);
 }

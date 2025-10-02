@@ -30,8 +30,12 @@ public class TodoController {
     @Operation(summary = "List all todos")
     @ApiResponse(responseCode = "200")
     @GetMapping()
-    public ResponseEntity<Iterable<Todo>> findAll() {
-        return ResponseEntity.ok(todoRepository.findAll());
+    public ResponseEntity<Iterable<Todo>> findByKeyword(@RequestParam(required = false) String title) {
+        if (title == null || title.isEmpty())
+            return ResponseEntity.ok(todoRepository.findAll());
+        else {
+            return ResponseEntity.ok(todoRepository.findByTitleContainingIgnoreCase(title));
+        }
     }
 
     @ApiResponses({
