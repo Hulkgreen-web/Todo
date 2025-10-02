@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "items")
 @Data
@@ -15,4 +17,5 @@ public class Todo {
     private long id;
     private String title;
     private boolean done;
+    private LocalDateTime done_date_time;
 }

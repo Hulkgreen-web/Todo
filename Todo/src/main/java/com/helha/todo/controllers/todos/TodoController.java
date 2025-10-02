@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/todos")
@@ -68,6 +69,10 @@ public class TodoController {
         todoFromRequest.setTitle(request.title);
         todoFromRequest.setDone(request.done);
 
+        if (todoFromRequest.isDone()) {
+            todoFromRequest.setDone_date_time(LocalDateTime.now());
+        }
+
         Todo todoSaved=todoRepository.save(todoFromRequest);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -92,11 +97,20 @@ public class TodoController {
         todoFromRequest.setId(request.id);
         todoFromRequest.setTitle(request.title);
         todoFromRequest.setDone(request.done);
+
+        if (request.done) {
+            todoFromRequest.setDone_date_time(LocalDateTime.now());
+        }
         Todo todoUpdated = todoRepository
                 .findById(todoFromRequest.getId())
                 .map(entity -> {
                     entity.setTitle(todoFromRequest.getTitle());
                     entity.setDone(todoFromRequest.isDone());
+                    if (todoFromRequest.isDone()) {
+                        entity.setDone_date_time(LocalDateTime.now());
+                    } else {
+                        entity.setDone_date_time(null);
+                    }
                     return todoRepository.save(entity);
                 }).get();
         return ResponseEntity.ok(todoUpdated);
