@@ -53,6 +53,11 @@ public class TodoController {
         return ResponseEntity.ok(todoRepository.findById(id).get());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<Iterable<Todo>> findBySavedAndDone(@RequestParam boolean saved, @RequestParam boolean done) {
+        return ResponseEntity.ok(todoRepository.findBySavedAndDone(saved,done));
+    }
+
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
                     headers = @Header(
