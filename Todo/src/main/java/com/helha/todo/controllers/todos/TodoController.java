@@ -101,6 +101,7 @@ public class TodoController {
         todoFromRequest.setId(request.id);
         todoFromRequest.setTitle(request.title);
         todoFromRequest.setDone(request.done);
+        todoFromRequest.setSaved(request.saved);
 
         if (request.done) {
             todoFromRequest.setDone_date_time(LocalDateTime.now());
@@ -115,6 +116,7 @@ public class TodoController {
                     } else {
                         entity.setDone_date_time(null);
                     }
+                    entity.setSaved(todoFromRequest.isSaved());
                     return todoRepository.save(entity);
                 }).get();
         return ResponseEntity.ok(todoUpdated);
@@ -141,6 +143,7 @@ public class TodoController {
     public record UpdateTodoRequest(
             long id,
             @NotBlank(message = "Title cannot be empty") String title,
-            boolean done
+            boolean done,
+            boolean saved
     ) {}
 }
