@@ -18,4 +18,5 @@ public class Todo {
     private String title;
     private boolean done;
     private LocalDateTime done_date_time;
+    private boolean saved;
 }
