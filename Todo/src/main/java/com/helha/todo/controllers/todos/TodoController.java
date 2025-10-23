@@ -141,7 +141,8 @@ public class TodoController {
     // RECORDS --> classe pour mettre variables d'instances en publiques --> utile pour véhiculer
     // des informations
     public record CreateTodoRequest(
-            @NotBlank(message = "Title cannot be empty") String title,
+            @NotBlank(message = "Title cannot be empty")
+            String title,
             boolean done
     ) {}
 
