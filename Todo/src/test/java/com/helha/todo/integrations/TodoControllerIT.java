@@ -1,8 +1,10 @@
 package com.helha.todo.integrations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.helha.todo.controllers.todos.TodoController;
 import com.helha.todo.domain.Todo;
-import com.helha.todo.infrastructure.ITodoRepository;
+import com.helha.todo.infrastructure.todo.DbTodo;
+import com.helha.todo.infrastructure.todo.ITodoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,10 +53,10 @@ public class TodoControllerIT {
         todoRepository.deleteAll();
     }
 
-    Todo persist(String title, boolean done){
-        Todo todo = new Todo();
-        todo.setTitle(title);
-        todo.setDone(done);
+    DbTodo persist(String title, boolean done){
+        DbTodo todo = new DbTodo();
+        todo.title = title;
+        todo.done = done;
         return todoRepository.save(todo);
     }
 
@@ -64,7 +66,7 @@ public class TodoControllerIT {
         @Test
         @DisplayName("200 - retourne une liste vide de todo")
         void getTodos_shouldReturnEmptyList() throws Exception {
-            mockMvc.perform(get("/todos")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
+            mockMvc.perform(get("/todos")).andExpect(status().isOk()).andExpect(jsonPath("$.todos", hasSize(0)));
         }
 
         @Test
@@ -75,10 +77,10 @@ public class TodoControllerIT {
 
             mockMvc.perform(get("/todos"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(2)))
-                    .andExpect(jsonPath("$[0].id").isNumber())
-                    .andExpect(jsonPath("$[0].title").isString())
-                    .andExpect(jsonPath("$[0].done").isBoolean());
+                    .andExpect(jsonPath("$.todos", hasSize(2)))
+                    .andExpect(jsonPath("$.todos[0].id").isNumber())
+                    .andExpect(jsonPath("$.todos[0].title").isString())
+                    .andExpect(jsonPath("$.todos[0].done").isBoolean());
         }
     }
 
@@ -93,6 +95,7 @@ public class TodoControllerIT {
         }
     }
 
+    /*
     @Nested
     @DisplayName("POST /todos")
     class AddTodo {
@@ -132,5 +135,86 @@ public class TodoControllerIT {
                     .andExpect(status().isBadRequest());
         }
     }
+
+    @Nested
+    @DisplayName("PUT /todos")
+    class UpdateTodo {
+        @Test
+        @DisplayName("200 - met à jour un todo existant")
+        void update_ok() throws Exception {
+            Todo current = persist("Init", false);
+            String newTitle = "Titre mis à jour";
+            TodoController.UpdateTodoRequest request = new TodoController.UpdateTodoRequest(
+                    current.getId(), newTitle, true
+            );
+
+            String payload = objectMapper.writeValueAsString(request);
+
+            mockMvc.perform(put("/todos")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(current.getId()))
+                    .andExpect(jsonPath("$.title").value(newTitle))
+                    .andExpect(jsonPath("$.done").value(true));
+        }
+
+        @Test
+        @DisplayName("400 - validation KO si title vide")
+        void update_validationError() throws Exception {
+            Todo current = persist("Init", false);
+
+            TodoController.UpdateTodoRequest request = new TodoController.UpdateTodoRequest(
+                    current.getId(), "", true
+            );
+
+            String payload = objectMapper.writeValueAsString(request);
+
+            mockMvc.perform(put("/todos")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("404 - todo à mettre à jour introuvable")
+        void update_notFound() throws Exception {
+            TodoController.UpdateTodoRequest request = new TodoController.UpdateTodoRequest(
+                    1000, "hello", true
+            );
+
+            String payload = objectMapper.writeValueAsString(request);
+
+            mockMvc.perform(put("/todos")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /todos/{id}")
+    class DeleteTodo {
+        @Test
+        @DisplayName("204 - supprime un todo existant")
+        void delete_noContent() throws Exception {
+            Todo t = persist("À supprimer", false);
+
+            mockMvc.perform(delete("/todos/{id}", t.getId()))
+                    .andExpect(status().isNoContent());
+
+            mockMvc.perform(get("/todos/{id}", t.getId()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("404 - suppression d'un id inexistant")
+        void delete_notFound() throws Exception {
+            mockMvc.perform(delete("/todos/{id}", 9999))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+ */
 
 }

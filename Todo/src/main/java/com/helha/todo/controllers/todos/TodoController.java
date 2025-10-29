@@ -1,8 +1,13 @@
 package com.helha.todo.controllers.todos;
 
+import com.helha.todo.application.todo.TodoProcessor;
+import com.helha.todo.application.todo.query.getall.GetAllTodoInput;
+import com.helha.todo.application.todo.query.getall.GetAllTodoOutput;
+import com.helha.todo.application.todo.query.getbyid.GetByIdTodoInput;
+import com.helha.todo.application.todo.query.getbyid.GetByIdTodoOutput;
 import com.helha.todo.controllers.todos.exceptions.TodoNotFoundException;
 import com.helha.todo.domain.Todo;
-import com.helha.todo.infrastructure.ITodoRepository;
+import com.helha.todo.infrastructure.todo.ITodoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,17 +25,20 @@ import java.net.URI;
 @RestController
 @RequestMapping("/todos")
 public class TodoController {
+    private final TodoProcessor todoProcessor;
     private ITodoRepository todoRepository;
 
-    public TodoController(ITodoRepository todoRepository) {
+    public TodoController(TodoProcessor todoProcessor, ITodoRepository todoRepository) {
+        this.todoProcessor = todoProcessor;
         this.todoRepository = todoRepository;
     }
 
     @Operation(summary = "List all todos")
     @ApiResponse(responseCode = "200")
     @GetMapping()
-    public ResponseEntity<Iterable<Todo>> findAll() {
-        return ResponseEntity.ok(todoRepository.findAll());
+    public ResponseEntity<GetAllTodoOutput> findAll() {
+        GetAllTodoInput input = new GetAllTodoInput();
+        return ResponseEntity.ok(todoProcessor.getGetAllTodoHandler().handle(input));
     }
 
     @ApiResponses({
@@ -41,13 +49,14 @@ public class TodoController {
     })
 
     @GetMapping("{id}")
-    public ResponseEntity<Todo> findById(@PathVariable Long id) {
+    public ResponseEntity<GetByIdTodoOutput> findById(@PathVariable Long id) {
         if (!todoRepository.existsById(id)) {
             throw new TodoNotFoundException(id);
         }
-        return ResponseEntity.ok(todoRepository.findById(id).get());
+        GetByIdTodoInput input = new GetByIdTodoInput();
+        return ResponseEntity.ok(todoProcessor.getGetByIdTodoHandler().handle(input));
     }
-
+/*
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
                     headers = @Header(
@@ -86,21 +95,18 @@ public class TodoController {
             @ApiResponse(responseCode = "404",
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
-    @PutMapping()
+    @PutMapping
     public ResponseEntity<Todo> update(@Valid @RequestBody UpdateTodoRequest request) {
-        Todo todoFromRequest = new Todo();
-        todoFromRequest.setId(request.id);
-        todoFromRequest.setTitle(request.title);
-        todoFromRequest.setDone(request.done);
-        Todo todoUpdated = todoRepository
-                .findById(todoFromRequest.getId())
+        return todoRepository.findById(request.id)
                 .map(entity -> {
-                    entity.setTitle(todoFromRequest.getTitle());
-                    entity.setDone(todoFromRequest.isDone());
-                    return todoRepository.save(entity);
-                }).get();
-        return ResponseEntity.ok(todoUpdated);
+                    entity.setTitle(request.title);
+                    entity.setDone(request.done);
+                    Todo saved = todoRepository.save(entity);
+                    return ResponseEntity.ok(saved);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
 
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", content = @Content),
@@ -109,6 +115,9 @@ public class TodoController {
     })
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){
+        if (!todoRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         todoRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -125,4 +134,6 @@ public class TodoController {
             @NotBlank(message = "Title cannot be empty") String title,
             boolean done
     ) {}
+
+     */
 }
