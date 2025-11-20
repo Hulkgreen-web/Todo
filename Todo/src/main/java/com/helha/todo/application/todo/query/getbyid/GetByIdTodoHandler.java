@@ -1,29 +1,32 @@
 package com.helha.todo.application.todo.query.getbyid;
 
+import com.helha.todo.application.utils.IQueryHandler;
 import com.helha.todo.infrastructure.todo.DbTodo;
 import com.helha.todo.infrastructure.todo.ITodoRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class GetByIdTodoHandler {
-    private final ITodoRepository todoRepository;
+public class GetByIdTodoHandler implements IQueryHandler<Long, GetByIdTodoOutput> {
+    private ITodoRepository todoRepository;
+    private ModelMapper modelMapper;
 
-    public GetByIdTodoHandler(ITodoRepository todoRepository) {
+    public GetByIdTodoHandler(ITodoRepository todoRepository, ModelMapper modelMapper) {
         this.todoRepository = todoRepository;
+        this.modelMapper = modelMapper;
     }
 
-    public GetByIdTodoOutput handle(GetByIdTodoInput input) {
-        Optional<DbTodo> dbTodo = todoRepository.findById(input.id);
-        GetByIdTodoOutput output = new GetByIdTodoOutput();
+    @Override
+    public GetByIdTodoOutput handle(Long input) {
+        Optional<DbTodo> entity = todoRepository.findById(input);
 
-        GetByIdTodoOutput.Todo todo = new GetByIdTodoOutput.Todo();
-        todo.id = input.id;
-        todo.title = input.title;
-        todo.done = input.done;
-        output.todo = todo;
+        if (entity.isPresent()) {
+            return modelMapper.map(entity.get(), GetByIdTodoOutput.class);
+        }
 
-        return output;
+        throw new IllegalArgumentException("Todo not found !");
     }
+
 }

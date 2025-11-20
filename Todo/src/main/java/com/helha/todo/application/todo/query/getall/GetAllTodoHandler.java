@@ -1,29 +1,35 @@
 package com.helha.todo.application.todo.query.getall;
 
+import com.helha.todo.application.utils.IQueryHandler;
 import com.helha.todo.infrastructure.todo.DbTodo;
 import com.helha.todo.infrastructure.todo.ITodoRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class GetAllTodoHandler {
+public class GetAllTodoHandler implements IQueryHandler<GetAllTodoInput, GetAllTodoOutput> {
     private final ITodoRepository todoRepository;
+    private final ModelMapper modelMapper;
 
-    public GetAllTodoHandler(ITodoRepository todoRepository) {
+    public GetAllTodoHandler(ITodoRepository todoRepository, ModelMapper modelMapper) {
         this.todoRepository = todoRepository;
+        this.modelMapper = modelMapper;
     }
+
     public GetAllTodoOutput handle(GetAllTodoInput input) {
-        Iterable<DbTodo> dbTodos = todoRepository.findAll();
+        Iterable<DbTodo> dbTodos;
         GetAllTodoOutput output = new GetAllTodoOutput();
+
+        if (input.done != null && input.archived != null){
+            dbTodos = todoRepository.findByDoneAndArchived(input.done, input.archived);
+        }
+        dbTodos = todoRepository.findAll();
 
         for (DbTodo entity : dbTodos) {
             // MAPPING
-            GetAllTodoOutput.Todo todo = new GetAllTodoOutput.Todo();
-            todo.id = entity.id;
-            todo.title = entity.title;
-            todo.done = entity.done;
-            output.todos.add(todo);
+            output.todos.add(modelMapper.map(entity, GetAllTodoOutput.Todo.class));
         }
         return output;
     }
